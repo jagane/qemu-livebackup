@@ -2368,7 +2368,18 @@ Specify a trace file to log output traces to.
 ETEXI
 #endif
 
+DEF("backup_port", HAS_ARG, QEMU_OPTION_backup_port,
+    "-backup_port b\n"
+    "                TCP port that the built in backup daemon listens on\n",
+    QEMU_ARCH_ALL)
+STEXI
+@item -backup_port
+@findex -backup_port
+TCP port that the built in backup daemon listens on
+ETEXI
+
 HXCOMM This is the last statement. Insert new options before this line!
 STEXI
 @end table
 ETEXI
+

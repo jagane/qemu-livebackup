@@ -28,6 +28,7 @@
 #include "block_int.h"
 #include "module.h"
 #include "qemu-objects.h"
+#include "livebackup.h"
 
 #ifdef CONFIG_BSD
 #include <sys/types.h>
@@ -461,8 +462,13 @@ static int bdrv_open_common(BlockDriverState *bs, const char *filename,
         open_flags |= BDRV_O_RDWR;
     }
 
+    bs->livebackup_disk = NULL;
+
     /* Open the image, either directly or using a protocol */
     if (drv->bdrv_file_open) {
+        if (flags & BDRV_O_RDWR) {
+            bs->livebackup_disk = open_dirty_bitmap(filename);
+        }
         ret = drv->bdrv_file_open(bs, filename, open_flags);
     } else {
         ret = bdrv_file_open(&bs->file, filename, open_flags);
@@ -490,6 +496,9 @@ static int bdrv_open_common(BlockDriverState *bs, const char *filename,
     return 0;
 
 free_and_fail:
+    if (bs->livebackup_disk != NULL) {
+        close_dirty_bitmap(bs);
+    }
     if (bs->file) {
         bdrv_delete(bs->file);
         bs->file = NULL;
@@ -679,6 +688,10 @@ void bdrv_close(BlockDriverState *bs)
 
         if (bs->file != NULL) {
             bdrv_close(bs->file);
+        }
+
+        if (bs->livebackup_disk) {
+            close_dirty_bitmap(bs);
         }
 
         /* call the change callback */
@@ -987,6 +1000,9 @@ int bdrv_write(BlockDriverState *bs, int64_t sector_num,
 
     if (bs->dirty_bitmap) {
         set_dirty_bitmap(bs, sector_num, nb_sectors, 1);
+    }
+    if (bs->livebackup_disk) {
+        set_dirty(bs, sector_num, nb_sectors);
     }
 
     if (bs->wr_highest_sector < sector_num + nb_sectors - 1) {
@@ -2233,8 +2249,14 @@ BlockDriverAIOCB *bdrv_aio_writev(BlockDriverState *bs, int64_t sector_num,
         opaque = blk_cb_data;
     }
 
-    ret = drv->bdrv_aio_writev(bs, sector_num, qiov, nb_sectors,
+    if (bs->livebackup_disk) {
+// fprintf(stderr, "[A:%d@%ld to %p(%p,%p)]\n", nb_sectors, sector_num, buf, cb, opaque);
+        ret = livebackup_interposer(bs, sector_num, qiov,
+                               nb_sectors, cb, opaque);
+    } else {
+        ret = drv->bdrv_aio_writev(bs, sector_num, qiov, nb_sectors,
                                cb, opaque);
+    }
 
     if (ret) {
         /* Update stats even though technically transfer has not happened. */
