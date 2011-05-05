@@ -78,6 +78,10 @@ static QemuOptsList qemu_drive_opts = {
         },{
             .name = "readonly",
             .type = QEMU_OPT_BOOL,
+        },{
+            .name = "livebackup",
+            .type = QEMU_OPT_BOOL,
+            .help = "enable livebackup for this drive",
         },
         { /* end of list */ }
     },
