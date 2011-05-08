@@ -2370,14 +2370,23 @@ Specify a trace file to log output traces to.
 ETEXI
 #endif
 
-DEF("backup_port", HAS_ARG, QEMU_OPTION_backup_port,
-    "-backup_port b\n"
-    "                TCP port that the built in backup daemon listens on\n",
+DEF("livebackup_port", HAS_ARG, QEMU_OPTION_livebackup_port,
+    "-livebackup_port b\n"
+    "                TCP port that the built in livebackup daemon listens on\n",
     QEMU_ARCH_ALL)
 STEXI
-@item -backup_port
-@findex -backup_port
-TCP port that the built in backup daemon listens on
+@item -livebackup_port
+@findex -livebackup_port
+TCP port that the built in livebackup daemon listens on
+ETEXI
+DEF("livebackup_dir", HAS_ARG, QEMU_OPTION_livebackup_dir,
+    "-livebackup_dir b\n"
+    "                dir where livebackup bitmap and config files are stored\n",
+    QEMU_ARCH_ALL)
+STEXI
+@item -livebackup_dir
+@findex -livebackup_dir
+dir where livebackup bitmap and config files are stored
 ETEXI
 
 HXCOMM This is the last statement. Insert new options before this line!
